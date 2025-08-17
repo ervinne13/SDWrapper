@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+requests
+nudenet==3.0.8
