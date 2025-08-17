@@ -2,6 +2,8 @@ import os
 import time
 import requests
 import prompt_patcher
+from datetime import datetime
+from post_processing import add_watermark
 from nsfw_classifier import check_nsfw, NSFWGeneratedOutput
 
 # --- Config ---
@@ -48,7 +50,16 @@ def execute_workflow(workflow):
                 file = None
     if not file and nsfw_error:
         return {"prompt_id": pid, "result": result, "file": None, "error": nsfw_error}
-    return {"prompt_id": pid, "result": result, "file": file}
+
+    image_path = os.path.join(OUTPUT_DIR, file)
+    ext = os.path.splitext(file)[1]
+    date_str = datetime.now().strftime("%Y%m%d%H%M%S")
+    watermarked_name = f"generated-{date_str}{ext}"
+    watermarked_path = os.path.join(OUTPUT_DIR, watermarked_name)
+    add_watermark(image_path, watermarked_path, "https://github.com/ervinne13: This is AI Generated Content", font_size=24)
+    output_file = watermarked_name
+
+    return {"prompt_id": pid, "result": result, "file": output_file}
 
 def send_workflow(workflow):
     response = requests.post(f"{COMFYUI_SERVER}/prompt", json={"prompt": workflow})
